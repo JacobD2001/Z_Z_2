@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/stylesheets/style.css" />
+</head>
+<body>
+  <h1><%= title %></h1>
+  <% if (customer) { %>
+    <p>CustomerId: <%= customer.CustomerId %></p>
+    <p>First Name: <%= customer.FirstName %></p>
+    <p>Last Name: <%= customer.LastName %></p>
+    <p>Email: <%= customer.Email %></p>
+    <p>Company: <%= customer.Company %></p>
+    <p>Address: <%= customer.Address %></p>
+    <p>City: <%= customer.City %></p>
+    <p>State: <%= customer.State %></p>
+    <p>Country: <%= customer.Country %></p>
+    <p>Postal Code: <%= customer.PostalCode %></p>
+    <p>Phone: <%= customer.Phone %></p>
+    <p>Fax: <%= customer.Fax %></p>
+    <p>Support Rep Id: <%= customer.SupportRepId %></p>
+  <% } else { %>
+    <p>Customer not found</p>
+  <% } %>
+</body>
+</html>

@@ -9,6 +9,7 @@ var logger = require('morgan');
 //var indexRouter = require('./routes/index');
 var dataRouter = require('./routes/data');
 var formdataRouter = require('./routes/formdata'); // Import the new formdata route
+var customerRouter = require('./routes/customer');
 
 var app = express();
 
@@ -35,10 +36,11 @@ app.get('/data', dataRouter);
 
 // Use the formdata router for handling form submissions
 app.use('/formdata', formdataRouter);
+app.use('/customer', customerRouter);
 
-//your stuff here
 app.get('/', (req, res) => res.render('index', { title: "Zadanie 2" }));
 app.get('/form', (req, res) => res.render('form', { title: "Form" }));
+
 
  //formdata should be handled by submitting the form naullay no need
 //app.get('/formdata', (req, res) => res.render('formdata', { title: "FormData" }));
