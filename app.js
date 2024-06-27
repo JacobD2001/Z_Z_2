@@ -5,13 +5,6 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const sqlite3 = require('sqlite3').verbose();
 
-//var sqlite3 = require('sqlite3').verbose();
-
-//var indexRouter = require('./routes/index');
-// var dataRouter = require('./routes/data');
-// var formdataRouter = require('./routes/formdata'); // Import the new formdata route
-// var customerRouter = require('./routes/customer');
-
 var app = express();
 
 // view engine setup
@@ -24,24 +17,23 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const db = new sqlite3.Database('./chinook.db', sqlite3.OPEN_READWRITE, (err)=>{
-  if (err){ console.error(err.message);
+const db = new sqlite3.Database('./chinook.db', sqlite3.OPEN_READWRITE, (err) => {
+  if (err) {
+    console.error(err.message);
   }
   console.log('Połączenie z bazą otwarte');
 });
 
-// /index/whatever/5 -> /whatever/5
-//app.use('/index', indexRouter);
-
-//customers
+// customers
 app.get('/customers', (req, res) => {
   const sql = "SELECT CustomerId, FirstName, LastName, Company FROM Customer";
   db.all(sql, [], (err, rows) => {
     if (err) {
       console.error(err.message);
       res.render('dbError');
+    } else {
+      res.render('customer_list', { customers: rows });
     }
-    res.render('customer_list', { customers: rows });
   });
 });
 
@@ -52,23 +44,29 @@ app.get('/customer/:id', (req, res) => {
     if (err) {
       console.error(err.message);
       res.render('dbError');
+    } else if (!row) {
+      res.render('dbError', { message: "Customer not found" });
+    } else {
+      res.render('customer_details', { customer: row });
     }
-    res.render('customer_details', { customer: row });
   });
 });
 
-//cw 4 
+app.get('/customers/add', (req, res) => {
+  res.render('customer_add');
+});
 
-app.post('/customer/add', (req, res) => {
+app.post('/customers/add', (req, res) => {
   const { FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId } = req.body;
   const sql = "INSERT INTO Customer (FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   db.run(sql, [FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId], function(err) {
-      if (err) {
-          console.error(err.message);
-          res.render('dbError');
-      }
+    if (err) {
+      console.error(err.message);
+      res.render('dbError');
+    } else {
       console.log(`A new customer has been added with id ${this.lastID}`);
       res.redirect('/customers');
+    }
   });
 });
 
@@ -79,8 +77,9 @@ app.get('/customer/edit/:id', (req, res) => {
     if (err) {
       console.error(err.message);
       res.render('dbError');
+    } else {
+      res.render('customer_edit', { customer: row });
     }
-    res.render('customer_edit', { customer: row });
   });
 });
 
@@ -89,30 +88,29 @@ app.post('/customer/edit/:id', (req, res) => {
   const customerId = req.params.id;
   const sql = "UPDATE Customer SET FirstName = ?, LastName = ?, Company = ?, Address = ?, City = ?, State = ?, Country = ?, PostalCode = ?, Phone = ?, Fax = ?, Email = ?, SupportRepId = ? WHERE CustomerId = ?";
   db.run(sql, [FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId, customerId], function(err) {
-      if (err) {
-          console.error(err.message);
-          res.render('dbError');
-      }
+    if (err) {
+      console.error(err.message);
+      res.render('dbError');
+    } else {
       console.log(`Customer with id ${customerId} has been updated`);
-      res.redirect(`/customers`);
+      res.redirect(`/customer/${customerId}`);
+    }
   });
 });
-
 
 app.post('/customer/delete/:id', (req, res) => {
   const customerId = req.params.id;
   const sql = "DELETE FROM Customer WHERE CustomerId = ?";
   db.run(sql, [customerId], function(err) {
-      if (err) {
-          console.error(err.message);
-          res.render('dbError');
-      }
+    if (err) {
+      console.error(err.message);
+      res.render('dbError');
+    } else {
       console.log(`Customer with id ${customerId} has been deleted`);
       res.redirect('/customers');
+    }
   });
 });
-
-
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -130,10 +128,4 @@ app.use(function (err, req, res, next) {
   res.render('error');
 });
 
-//db.close((err) => {
-//  if (err) {
-//    console.error(err.message);
-//  }
-//  console.log('Close the database connection.');
-//});
 module.exports = app;
