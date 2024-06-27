@@ -3,13 +3,14 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const sqlite3 = require('sqlite3').verbose();
 
 //var sqlite3 = require('sqlite3').verbose();
 
 //var indexRouter = require('./routes/index');
-var dataRouter = require('./routes/data');
-var formdataRouter = require('./routes/formdata'); // Import the new formdata route
-var customerRouter = require('./routes/customer');
+// var dataRouter = require('./routes/data');
+// var formdataRouter = require('./routes/formdata'); // Import the new formdata route
+// var customerRouter = require('./routes/customer');
 
 var app = express();
 
@@ -23,28 +24,95 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-//let db = new sqlite3.Database('./db/chinook.db', (err) => {
-//  if (err) {
-//    console.error(err.message);
-//  }
-//  console.log('Connected to the chinook database.');
-//});
+const db = new sqlite3.Database('./chinook.db', sqlite3.OPEN_READWRITE, (err)=>{
+  if (err){ console.error(err.message);
+  }
+  console.log('Połączenie z bazą otwarte');
+});
 
 // /index/whatever/5 -> /whatever/5
 //app.use('/index', indexRouter);
-app.get('/data', dataRouter);
 
-// Use the formdata router for handling form submissions
-app.use('/formdata', formdataRouter);
-app.use('/customer', customerRouter);
+//customers
+app.get('/customers', (req, res) => {
+  const sql = "SELECT CustomerId, FirstName, LastName, Company FROM Customer";
+  db.all(sql, [], (err, rows) => {
+    if (err) {
+      console.error(err.message);
+      res.render('dbError');
+    }
+    res.render('customer_list', { customers: rows });
+  });
+});
 
-app.get('/', (req, res) => res.render('index', { title: "Zadanie 2" }));
-app.get('/form', (req, res) => res.render('form', { title: "Form" }));
+app.get('/customer/:id', (req, res) => {
+  const customerId = req.params.id;
+  const sql = "SELECT * FROM Customer WHERE CustomerId = ?";
+  db.get(sql, [customerId], (err, row) => {
+    if (err) {
+      console.error(err.message);
+      res.render('dbError');
+    }
+    res.render('customer_details', { customer: row });
+  });
+});
+
+//cw 4 
+
+app.post('/customer/add', (req, res) => {
+  const { FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId } = req.body;
+  const sql = "INSERT INTO Customer (FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  db.run(sql, [FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId], function(err) {
+      if (err) {
+          console.error(err.message);
+          res.render('dbError');
+      }
+      console.log(`A new customer has been added with id ${this.lastID}`);
+      res.redirect('/customers');
+  });
+});
+
+app.get('/customer/edit/:id', (req, res) => {
+  const customerId = req.params.id;
+  const sql = "SELECT * FROM Customer WHERE CustomerId = ?";
+  db.get(sql, [customerId], (err, row) => {
+    if (err) {
+      console.error(err.message);
+      res.render('dbError');
+    }
+    res.render('customer_edit', { customer: row });
+  });
+});
+
+app.post('/customer/edit/:id', (req, res) => {
+  const { FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId } = req.body;
+  const customerId = req.params.id;
+  const sql = "UPDATE Customer SET FirstName = ?, LastName = ?, Company = ?, Address = ?, City = ?, State = ?, Country = ?, PostalCode = ?, Phone = ?, Fax = ?, Email = ?, SupportRepId = ? WHERE CustomerId = ?";
+  db.run(sql, [FirstName, LastName, Company, Address, City, State, Country, PostalCode, Phone, Fax, Email, SupportRepId, customerId], function(err) {
+      if (err) {
+          console.error(err.message);
+          res.render('dbError');
+      }
+      console.log(`Customer with id ${customerId} has been updated`);
+      res.redirect(`/customers`);
+  });
+});
 
 
- //formdata should be handled by submitting the form naullay no need
-//app.get('/formdata', (req, res) => res.render('formdata', { title: "FormData" }));
-//app.get('/data', (req, res) => res.render('data', { title: "Data" }));
+app.post('/customer/delete/:id', (req, res) => {
+  const customerId = req.params.id;
+  const sql = "DELETE FROM Customer WHERE CustomerId = ?";
+  db.run(sql, [customerId], function(err) {
+      if (err) {
+          console.error(err.message);
+          res.render('dbError');
+      }
+      console.log(`Customer with id ${customerId} has been deleted`);
+      res.redirect('/customers');
+  });
+});
+
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Customer</title>
+</head>
+<body>
+    <h1>Delete Customer</h1>
+    <p>Are you sure you want to delete customer <%= customer.FirstName %> <%= customer.LastName %>?</p>
+    <form action="/customer/delete/<%= customer.CustomerId %>" method="post">
+        <button type="submit">Delete</button>
+        <a href="/customers">Cancel</a>
+    </form>
+</body>
+</html>
