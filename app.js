@@ -4,8 +4,12 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const sqlite3 = require('sqlite3').verbose();
+const usersRouter = require('./routes/users');
+
+
 
 var app = express();
+const sessions = new Map();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -17,12 +21,26 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+
 const db = new sqlite3.Database('./chinook.db', sqlite3.OPEN_READWRITE, (err) => {
   if (err) {
     console.error(err.message);
   }
   console.log('Połączenie z bazą otwarte');
 });
+
+app.set('db', db);
+app.set('sessions', sessions);
+
+//routers
+app.use('/users', usersRouter);
+
+// index
+app.get('/', (req, res) => {
+  res.render('index', { title: 'Home' });
+});
+
 
 // customers
 app.get('/customers', (req, res) => {
@@ -112,6 +130,8 @@ app.post('/customer/delete/:id', (req, res) => {
   });
 });
 
+// errors middleware
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
@@ -127,5 +147,7 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+
 
 module.exports = app;
